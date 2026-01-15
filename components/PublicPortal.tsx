@@ -1,14 +1,16 @@
 
 import React, { useState } from 'react';
 import { Project, ProjectStatus } from '../types';
-import { MapPin, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import { MapPin, Calendar, ChevronDown, ChevronUp, LogIn } from 'lucide-react';
 import { generatePublicSummary } from '../services/geminiService';
 
 interface PublicPortalProps {
   projects: Project[];
+  // Added onBackToLogin to fix type error in App.tsx
+  onBackToLogin?: () => void;
 }
 
-const PublicPortal: React.FC<PublicPortalProps> = ({ projects }) => {
+const PublicPortal: React.FC<PublicPortalProps> = ({ projects, onBackToLogin }) => {
   // Fix: ProjectStatus.P1_PLAN_VALIDATION does not exist, using P1_PIP_INSCRIPTION for public projects
   const publicProjects = projects.filter(p => [ProjectStatus.P1_PIP_INSCRIPTION, ProjectStatus.ACTIVE].includes(p.status));
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -37,6 +39,14 @@ const PublicPortal: React.FC<PublicPortalProps> = ({ projects }) => {
     <div className="bg-gray-50 min-h-screen">
       {/* Hero Section */}
       <div className="bg-primary-900 text-white py-16 px-6 text-center relative overflow-hidden">
+        {onBackToLogin && (
+          <button 
+            onClick={onBackToLogin}
+            className="absolute top-6 right-6 z-20 flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-white/10"
+          >
+            <LogIn size={14} /> Connexion Agents
+          </button>
+        )}
         <div className="absolute top-0 left-0 w-full h-full bg-opacity-20 bg-[url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center z-0 opacity-20"></div>
         <div className="relative z-10 max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Transparence des Projets PPP</h1>
