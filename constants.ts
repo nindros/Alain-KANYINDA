@@ -18,16 +18,20 @@ export const MOCK_PROJECTS: Project[] = [
     description: 'Système de transport ferroviaire de masse pour désengorger la capitale.',
     sector: ProjectSector.TRANSPORT,
     location: 'Kinshasa (Boucle Intérieure)',
-    status: ProjectStatus.P2_FEASIBILITY_PREP,
+    // Fix: Using correct status P2_FEASIBILITY instead of P2_FEASIBILITY_PREP
+    status: ProjectStatus.P2_FEASIBILITY,
     authority: 'OGEFREM',
     parentMinistry: 'Ministère des Transports',
     authorityType: AuthorityType.ENTERPRISE,
     capex: 450000000,
     startDate: '2024-03-15',
     progress: 45,
-    documents: [],
+    documents: [
+      { id: 'd1', name: 'Note Conceptuelle.pdf', type: 'Fiche_Projet', url: '#', dateUploaded: '2024-01-10', author: 'OGEFREM' },
+      { id: 'd2', name: 'Etude Pré-Faisabilité.pdf', type: 'Etude_PreFais', url: '#', dateUploaded: '2024-02-15', author: 'Bureau Technique' }
+    ],
     approvalHistory: [
-        { date: '2024-01-10', action: 'FAVORABLE', actor: 'Ministère des Transports', comment: 'Projet prioritaire pour la mobilité urbaine.' }
+        { date: '2024-01-10', action: 'FAVORABLE', actor: 'Ministère des Transports', comment: 'Projet prioritaire pour la mobility urbaine.' }
     ],
   },
   {
@@ -43,7 +47,10 @@ export const MOCK_PROJECTS: Project[] = [
     capex: 1200000000,
     startDate: '2023-11-20',
     progress: 75,
-    documents: [],
+    documents: [
+      { id: 'd3', name: 'Contrat de Concession.pdf', type: 'Contrat', url: '#', dateUploaded: '2023-12-01', author: 'Cabinet Présidence' },
+      { id: 'd4', name: 'Plan Impact Environnemental.pdf', type: 'Etude_Fais', url: '#', dateUploaded: '2023-11-25', author: 'ACE' }
+    ],
     approvalHistory: [
         { date: '2023-09-05', action: 'FAVORABLE', actor: 'Ministère des Transports', comment: 'Dossier stratégique national.' }
     ]
@@ -54,14 +61,17 @@ export const MOCK_PROJECTS: Project[] = [
     description: 'Projet priorisé en attente de validation par le Ministère du Plan.',
     sector: ProjectSector.ENERGY,
     location: 'Lualaba',
-    status: ProjectStatus.P1_UC_CONFORMITY,
+    // Fix: Using correct status P1_SECTORIAL_VALIDATION instead of P1_UC_CONFORMITY
+    status: ProjectStatus.P1_SECTORIAL_VALIDATION,
     authority: 'ANSER',
     parentMinistry: "Ministère de l'Énergie",
     authorityType: AuthorityType.ESTABLISHMENT,
     capex: 85000000,
     startDate: '2024-06-01',
     progress: 25,
-    documents: [],
+    documents: [
+      { id: 'd5', name: 'Fiche Projet Validée.pdf', type: 'Fiche_Projet', url: '#', dateUploaded: '2024-05-10', author: 'ANSER' }
+    ],
     approvalHistory: [
         { date: '2024-05-15', action: 'RESERVE', actor: "Ministère de l'Énergie", comment: 'Favorable sous réserve de précision sur le tracé des lignes.' }
     ]

@@ -2,9 +2,10 @@
 import React from 'react';
 import { 
   LayoutDashboard, X, Target, Microscope, ShieldCheck, 
-  Gavel, Users, LogOut, Search, Settings, ChevronRight, Database
+  Gavel, Users, LogOut, Search, Settings, ChevronRight, Database,
+  Lock, ShieldAlert
 } from 'lucide-react';
-import { UserRole, User, Project, ProjectStatus } from '../types';
+import { UserRole, User, Project, ProjectStatus, UserProfile } from '../types';
 
 interface SidebarProps {
   user: User | null;
@@ -14,46 +15,66 @@ interface SidebarProps {
   toggleSidebar: () => void;
   onLogout: () => void;
   projects?: Project[];
+  profiles?: UserProfile[];
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ user, activeView, setActiveView, isOpen, toggleSidebar, onLogout, projects = [] }) => {
+const Sidebar: React.FC<SidebarProps> = ({ user, activeView, setActiveView, isOpen, toggleSidebar, onLogout, projects = [], profiles = [] }) => {
   const getCounts = () => ({
     p1: projects.filter(p => p.status.startsWith('P1') || p.status === ProjectStatus.SUBMITTED).length,
     p2: projects.filter(p => p.status.startsWith('P2')).length,
     p3: projects.filter(p => p.status.startsWith('P3')).length,
-    approvals: projects.filter(p => [ProjectStatus.SUBMITTED, ProjectStatus.P1_UC_CONFORMITY, ProjectStatus.P2_MULTILATERAL_AVIS, ProjectStatus.P3_VISA_UC_FINAL].includes(p.status)).length
+    // Fix: Using valid enum properties P1_SECTORIAL_VALIDATION and P2_UC_AVIS_CONFORME
+    approvals: projects.filter(p => [ProjectStatus.SUBMITTED, ProjectStatus.P1_SECTORIAL_VALIDATION, ProjectStatus.P2_UC_AVIS_CONFORME, ProjectStatus.P3_VISA_UC_FINAL].includes(p.status)).length,
+    pendingHabilitations: profiles.filter(p => p.status === 'Inactive').length
   });
 
   const counts = getCounts();
   const currentUserRole = user?.role || UserRole.PUBLIC;
 
-  const sections = [
+  const sections: {
+    title: string;
+    color?: string;
+    items: {
+      id: string;
+      label: string;
+      icon: any;
+      roles: UserRole[];
+      badge?: number;
+      badgeColor?: string;
+    }[];
+  }[] = [
     { title: "PILOTAGE", items: [
-      { id: 'dashboard', label: 'Portefeuille', icon: LayoutDashboard, roles: Object.values(UserRole).filter(r => r !== UserRole.PUBLIC) },
-      { id: 'approvals', label: 'Avis & Visas', icon: ShieldCheck, roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ANALYST, UserRole.VALIDATOR, UserRole.FINANCE, UserRole.BUDGET], badge: counts.approvals },
+      { id: 'dashboard', label: 'Portefeuille National', icon: LayoutDashboard, roles: Object.values(UserRole).filter(r => r !== UserRole.PUBLIC) },
+      { id: 'approvals', label: 'Visas Techniques', icon: ShieldCheck, roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.ANALYST, UserRole.VALIDATOR, UserRole.FINANCE, UserRole.BUDGET], badge: counts.approvals },
     ]},
-    { title: "CYCLES", color: "text-blue-400", items: [
-      { id: 'projects', label: 'Ph.1 Identification', icon: Search, roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MINISTRY, UserRole.VALIDATOR], badge: counts.p1 },
-      { id: 'studies', label: 'Ph.2 Structuration', icon: Microscope, roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MINISTRY, UserRole.FINANCE, UserRole.BUDGET], badge: counts.p2 },
-      { id: 'procurement', label: 'Ph.3 Passation', icon: Gavel, roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MINISTRY, UserRole.ANALYST], badge: counts.p3 },
+    { title: "CYCLES DE VIE", color: "text-blue-400", items: [
+      { id: 'projects', label: 'Phase 1: Identification', icon: Search, roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MINISTRY, UserRole.VALIDATOR], badge: counts.p1 },
+      { id: 'studies', label: 'Phase 2: Structuration', icon: Microscope, roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MINISTRY, UserRole.FINANCE, UserRole.BUDGET], badge: counts.p2 },
+      { id: 'procurement', label: 'Phase 3: Passation', icon: Gavel, roles: [UserRole.ADMIN, UserRole.COORDINATOR, UserRole.MINISTRY, UserRole.ANALYST], badge: counts.p3 },
     ]},
-    { title: "SYSTEME", items: [
-      { id: 'admin', label: 'Acteurs', icon: Users, roles: [UserRole.ADMIN, UserRole.COORDINATOR] },
-      { id: 'documents', label: 'Documentation', icon: Database, roles: Object.values(UserRole).filter(r => r !== UserRole.PUBLIC) },
-      { id: 'settings', label: 'Configuration', icon: Settings, roles: [UserRole.ADMIN] },
+    { title: "ADMINISTRATION UC-PPP", items: [
+      { 
+        id: 'admin', 
+        label: 'Administration (Accès)', // Renommé pour clarté
+        icon: Lock, 
+        roles: [UserRole.ADMIN, UserRole.COORDINATOR], 
+        badge: counts.pendingHabilitations,
+        badgeColor: 'bg-red-600 animate-pulse ring-4 ring-red-600/20' 
+      },
+      { id: 'documents', label: 'Banque Documentaire', icon: Database, roles: Object.values(UserRole).filter(r => r !== UserRole.PUBLIC) },
     ]}
   ];
 
   return (
     <>
       <div className={`fixed inset-0 z-20 bg-black/60 backdrop-blur-sm lg:hidden ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={toggleSidebar} />
-      <div className={`fixed top-0 left-0 z-30 h-full w-64 bg-[#0a192f] text-white transform transition-transform lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col border-r border-white/5`}>
+      <div className={`fixed top-0 left-0 z-30 h-full w-72 bg-[#0a192f] text-white transform transition-transform lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col border-r border-white/5`}>
         <div className="flex items-center justify-between h-20 px-6 bg-[#061021] border-b border-white/5">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-accent-500 rounded-xl flex items-center justify-center text-primary-900 font-black text-sm">UC</div>
             <div className="text-left">
               <span className="text-[10px] font-black tracking-tighter block leading-none">UC-PPP RDC</span>
-              <span className="text-[7px] font-bold text-accent-400 uppercase tracking-widest mt-1 block">Digital v2.5</span>
+              <span className="text-[7px] font-bold text-accent-400 uppercase tracking-widest mt-1 block">Plateforme Officielle</span>
             </div>
           </div>
           <button onClick={toggleSidebar} className="lg:hidden text-white/50"><X size={18} /></button>
@@ -69,13 +90,17 @@ const Sidebar: React.FC<SidebarProps> = ({ user, activeView, setActiveView, isOp
                 <nav className="space-y-0.5">
                   {visibleItems.map((item) => (
                     <button key={item.id} onClick={() => { setActiveView(item.id); if (window.innerWidth < 1024) toggleSidebar(); }}
-                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all ${activeView === item.id ? 'bg-primary-600 text-white shadow-lg' : 'text-primary-200 hover:bg-white/5'}`}
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all ${activeView === item.id ? 'bg-primary-600 text-white shadow-lg border border-white/10' : 'text-primary-200 hover:bg-white/5'}`}
                     >
                       <div className="flex items-center">
                         <item.icon size={14} className={`mr-3 ${activeView === item.id ? 'text-accent-400' : 'text-primary-500'}`} />
                         <span className="font-bold text-[9px] uppercase tracking-tight">{item.label}</span>
                       </div>
-                      {item.badge && item.badge > 0 && <span className="text-[7px] font-black px-1.5 py-0.5 rounded bg-accent-500 text-primary-900">{item.badge}</span>}
+                      {item.badge && item.badge > 0 && (
+                        <span className={`text-[7px] font-black px-1.5 py-0.5 rounded text-white ${item.badgeColor || 'bg-accent-500 text-primary-900'}`}>
+                          {item.badge}
+                        </span>
+                      )}
                     </button>
                   ))}
                 </nav>

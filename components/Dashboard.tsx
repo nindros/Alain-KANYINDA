@@ -2,17 +2,19 @@
 import React from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { Project, ProjectStatus, ProjectSector, UserRole } from '../types';
-import { Target, Microscope, Gavel, ShieldCheck } from 'lucide-react';
+import { Target, Microscope, Gavel, ShieldCheck, AlertCircle, Users } from 'lucide-react';
 
 interface DashboardProps {
   projects: Project[];
   userRole?: UserRole;
   userName?: string;
+  pendingValidations?: number;
+  onGoToAdmin?: () => void;
 }
 
 const COLORS = ['#1e3a8a', '#3b82f6', '#facc15', '#eab308', '#2563eb'];
 
-const Dashboard: React.FC<DashboardProps> = ({ projects, userRole, userName }) => {
+const Dashboard: React.FC<DashboardProps> = ({ projects, userRole, userName, pendingValidations = 0, onGoToAdmin }) => {
   const stats = {
     p1: projects.filter(p => p.status.startsWith('P1') || p.status === ProjectStatus.SUBMITTED).length,
     p2: projects.filter(p => p.status.startsWith('P2')).length,
@@ -20,9 +22,33 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, userRole, userName }) =
   };
 
   const totalCapex = projects.reduce((acc, p) => acc + (p.capex || 0), 0) / 1000000;
+  const isAdmin = userRole === UserRole.ADMIN || userRole === UserRole.COORDINATOR;
 
   return (
     <div className="p-4 space-y-4 animate-fade-in max-w-7xl mx-auto">
+      {/* ALERTE ADMIN */}
+      {isAdmin && pendingValidations > 0 && (
+          <div className="bg-red-50 border border-red-100 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-pulse-soft">
+             <div className="flex items-center gap-4">
+                <div className="p-3 bg-red-500 text-white rounded-xl shadow-lg shadow-red-500/20">
+                    <Users size={20} />
+                </div>
+                <div>
+                    <h3 className="text-sm font-black text-red-800 uppercase tracking-tight">Nouvelles demandes d'accès</h3>
+                    <p className="text-[10px] font-bold text-red-600">{pendingValidations} agent(s) en attente de validation par l'UC-PPP.</p>
+                </div>
+             </div>
+             {onGoToAdmin && (
+                <button 
+                    onClick={onGoToAdmin}
+                    className="px-6 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg"
+                >
+                    Gérer les accès
+                </button>
+             )}
+          </div>
+      )}
+
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="text-left">
           <h2 className="text-xl font-black text-primary-900 tracking-tighter uppercase">{userRole === UserRole.MINISTRY ? `Espace AC : ${userName}` : "Tableau de Bord UC-PPP"}</h2>
@@ -53,8 +79,9 @@ const Dashboard: React.FC<DashboardProps> = ({ projects, userRole, userName }) =
              <ShieldCheck size={14} className="text-primary-600" /> Flux d'Approbation
            </h3>
            <div className="space-y-2">
-              <AvisItem label="En attente Avis UC-PPP (P1)" total={projects.filter(p => p.status === ProjectStatus.P1_UC_CONFORMITY).length} color="bg-blue-600" />
-              <AvisItem label="Instruction Organes (P2)" total={projects.filter(p => p.status === ProjectStatus.P2_MULTILATERAL_AVIS).length} color="bg-amber-500" />
+              {/* Fix: Using valid enum properties P1_SECTORIAL_VALIDATION and P2_UC_AVIS_CONFORME */}
+              <AvisItem label="En attente Avis UC-PPP (P1)" total={projects.filter(p => p.status === ProjectStatus.P1_SECTORIAL_VALIDATION).length} color="bg-blue-600" />
+              <AvisItem label="Instruction Organes (P2)" total={projects.filter(p => p.status === ProjectStatus.P2_UC_AVIS_CONFORME).length} color="bg-amber-500" />
               <AvisItem label="Signature / Approbation (P3)" total={projects.filter(p => p.status === ProjectStatus.P3_APPROBATION).length} color="bg-primary-900" />
            </div>
         </div>

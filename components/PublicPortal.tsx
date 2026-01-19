@@ -11,8 +11,8 @@ interface PublicPortalProps {
 }
 
 const PublicPortal: React.FC<PublicPortalProps> = ({ projects, onBackToLogin }) => {
-  // Fix: ProjectStatus.P1_PLAN_VALIDATION does not exist, using P1_PIP_INSCRIPTION for public projects
-  const publicProjects = projects.filter(p => [ProjectStatus.P1_PIP_INSCRIPTION, ProjectStatus.ACTIVE].includes(p.status));
+  // Fix: Using ProjectStatus.P1_PLAN_VALIDATION instead of P1_PIP_INSCRIPTION for public projects
+  const publicProjects = projects.filter(p => [ProjectStatus.P1_PLAN_VALIDATION, ProjectStatus.ACTIVE].includes(p.status));
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [aiSummaries, setAiSummaries] = useState<Record<string, string>>({});
   const [loadingSummary, setLoadingSummary] = useState<string | null>(null);

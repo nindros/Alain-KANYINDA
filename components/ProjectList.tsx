@@ -5,7 +5,7 @@ import {
   Search, Filter, RotateCcw, ShieldCheck, Zap, AlertCircle, 
   Tag, XCircle, Microscope, MapPin, FolderOpen, 
   Building2, BadgeCheck, ShieldAlert, ChevronDown, UserCheck, 
-  FileCheck, Lock, Globe, PlayCircle, FileClock
+  FileCheck, Lock, Globe, PlayCircle, FileClock, Landmark
 } from 'lucide-react';
 
 interface ProjectListProps {
@@ -20,6 +20,13 @@ const ProjectList: React.FC<ProjectListProps> = ({ projects, onSelectProject, is
   const [searchTerm, setSearchTerm] = useState('');
   const [filterSector, setFilterSector] = useState<string>('All');
   const [filterStatus, setFilterStatus] = useState<string>('All');
+  const [filterMinistry, setFilterMinistry] = useState<string>('All');
+
+  // Extraction dynamique des ministères uniques présents dans la liste des projets
+  const uniqueMinistries = useMemo(() => {
+    const ministries = projects.map(p => p.parentMinistry).filter(m => m && m.trim() !== '');
+    return Array.from(new Set(ministries)).sort();
+  }, [projects]);
 
   const filteredProjects = useMemo(() => {
     return projects.filter(project => {
@@ -27,18 +34,28 @@ const ProjectList: React.FC<ProjectListProps> = ({ projects, onSelectProject, is
       const matchesSearch = project.title.toLowerCase().includes(term) || project.location.toLowerCase().includes(term);
       const matchesSector = filterSector === 'All' || project.sector === filterSector;
       const matchesStatus = filterStatus === 'All' || project.status === filterStatus;
-      return matchesSearch && matchesSector && matchesStatus;
+      const matchesMinistry = filterMinistry === 'All' || project.parentMinistry === filterMinistry;
+      
+      return matchesSearch && matchesSector && matchesStatus && matchesMinistry;
     });
-  }, [projects, searchTerm, filterSector, filterStatus]);
+  }, [projects, searchTerm, filterSector, filterStatus, filterMinistry]);
 
   const getStatusConfig = (status: ProjectStatus) => {
     switch (status) {
       case ProjectStatus.SUBMITTED: return { color: 'bg-slate-50 text-slate-600', icon: <FileClock size={10} />, label: 'En attente' };
-      case ProjectStatus.P1_UC_CONFORMITY: return { color: 'bg-blue-600 text-white', icon: <ShieldCheck size={10} />, label: 'Avis UC-PPP' };
+      // Fix: Using valid enum property P1_SECTORIAL_VALIDATION
+      case ProjectStatus.P1_SECTORIAL_VALIDATION: return { color: 'bg-blue-600 text-white', icon: <ShieldCheck size={10} />, label: 'Avis UC-PPP' };
       case ProjectStatus.ACTIVE: return { color: 'bg-emerald-600 text-white', icon: <PlayCircle size={10} />, label: 'Exploitation' };
       case ProjectStatus.REJECTED: return { color: 'bg-red-50 text-red-700', icon: <XCircle size={10} />, label: 'Rejeté' };
       default: return { color: 'bg-gray-50 text-gray-600', icon: <FileCheck size={10} />, label: status.split(':')[0] };
     }
+  };
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setFilterSector('All');
+    setFilterStatus('All');
+    setFilterMinistry('All');
   };
 
   return (
@@ -59,23 +76,42 @@ const ProjectList: React.FC<ProjectListProps> = ({ projects, onSelectProject, is
       </div>
 
       <div className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-12 gap-2">
-            <div className="md:col-span-5 relative">
+            {/* Recherche */}
+            <div className="md:col-span-3 relative">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input type="text" placeholder="Recherche..." className="pl-9 pr-3 w-full rounded-xl border-gray-200 border py-2 text-[10px] font-bold outline-none" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
+
+            {/* Filtre Ministère (Nouveau) */}
+            <div className="md:col-span-3 relative">
+                <Landmark size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <select 
+                  className="w-full appearance-none bg-gray-50 border border-gray-200 pl-9 pr-3 py-2 rounded-xl text-[9px] font-black uppercase outline-none truncate" 
+                  value={filterMinistry} 
+                  onChange={(e) => setFilterMinistry(e.target.value)}
+                >
+                    <option value="All">Tous Ministères</option>
+                    {uniqueMinistries.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+                <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+
+            {/* Filtre Secteur */}
             <div className="md:col-span-3 relative">
                 <select className="w-full appearance-none bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl text-[9px] font-black uppercase outline-none" value={filterSector} onChange={(e) => setFilterSector(e.target.value)}>
-                    <option value="All">Secteurs</option>
+                    <option value="All">Tous Secteurs</option>
                     {Object.values(ProjectSector).map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
-                <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             </div>
-            <div className="md:col-span-4 relative flex gap-2">
+
+            {/* Filtre Phase + Reset */}
+            <div className="md:col-span-3 relative flex gap-2">
                 <select className="flex-1 appearance-none bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl text-[9px] font-black uppercase outline-none" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-                    <option value="All">Phases</option>
+                    <option value="All">Toutes Phases</option>
                     {Object.values(ProjectStatus).map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
-                <button onClick={() => { setSearchTerm(''); setFilterSector('All'); setFilterStatus('All'); }} className="p-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200"><RotateCcw size={14} /></button>
+                <button onClick={handleResetFilters} className="p-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200" title="Réinitialiser les filtres"><RotateCcw size={14} /></button>
             </div>
       </div>
 
@@ -85,7 +121,7 @@ const ProjectList: React.FC<ProjectListProps> = ({ projects, onSelectProject, is
             <thead className="bg-gray-50/50">
               <tr>
                 <th className="px-5 py-3 text-left text-[8px] font-black text-gray-400 uppercase tracking-widest">Projet</th>
-                <th className="px-5 py-3 text-left text-[8px] font-black text-gray-400 uppercase tracking-widest">Autorité (AC)</th>
+                <th className="px-5 py-3 text-left text-[8px] font-black text-gray-400 uppercase tracking-widest">Autorité & Tutelle</th>
                 <th className="px-5 py-3 text-left text-[8px] font-black text-gray-400 uppercase tracking-widest">Budget (M$)</th>
                 <th className="px-5 py-3 text-left text-[8px] font-black text-gray-400 uppercase tracking-widest">Phase</th>
               </tr>
@@ -102,7 +138,16 @@ const ProjectList: React.FC<ProjectListProps> = ({ projects, onSelectProject, is
                       </div>
                     </td>
                     <td className="px-5 py-3 text-left">
-                       <span className="text-[9px] font-black text-gray-700 uppercase flex items-center gap-2"><Building2 size={10} className="text-gray-300"/> {project.authority}</span>
+                       <div className="flex flex-col">
+                          <span className="text-[9px] font-black text-gray-700 uppercase flex items-center gap-2">
+                            <Building2 size={10} className="text-gray-300"/> {project.authority}
+                          </span>
+                          {project.parentMinistry && (
+                            <span className="text-[8px] font-bold text-gray-400 uppercase pl-4">
+                               Tutelle: {project.parentMinistry}
+                            </span>
+                          )}
+                       </div>
                     </td>
                     <td className="px-5 py-3 text-left">
                       <span className="text-xs text-gray-900 font-black">{(project.capex / 1000000).toLocaleString('fr-FR')}</span>
